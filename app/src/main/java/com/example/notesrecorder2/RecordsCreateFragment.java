@@ -55,9 +55,15 @@ public class RecordsCreateFragment extends Fragment {
     private Uri savedUri;
     private DatabaseManager dbManager;
 
+    private ViewPagerAdapter mAdapter;
+
     public RecordsCreateFragment() {
         // Required empty public constructor
         savedUri = Uri.EMPTY;
+    }
+
+    public void setViewPagerAdapter(ViewPagerAdapter adapter) {
+        this.mAdapter = adapter;
     }
 
     /**
@@ -119,6 +125,7 @@ public class RecordsCreateFragment extends Fragment {
                 //binding.tvNotes.setText(note);  // TODO: save to a SQLite db
 
                 dbManager.insert(note, savedUri.getPath());
+                mAdapter.refreshListFragment();
             }
         });
 

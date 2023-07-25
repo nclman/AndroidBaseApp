@@ -7,19 +7,15 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 public class ListViewAdapter extends BaseAdapter {
-    Context context;
     String textNotes[];
     String audioNotes[];
-    LayoutInflater inflter;
+    LayoutInflater inflater;
 
     public ListViewAdapter(Context c, String[] textNotes, String[] audioNotes) {
-        this.context = c;
         this.textNotes = textNotes;
         this.audioNotes = audioNotes;
-        inflter = LayoutInflater.from(c);
+        inflater = LayoutInflater.from(c);
     }
 
     @Override
@@ -39,7 +35,7 @@ public class ListViewAdapter extends BaseAdapter {
 
     @Override
     public View getView(int i, View view, ViewGroup viewgroup) {
-        view = inflter.inflate(R.layout.record_list_item, null);
+        view = inflater.inflate(R.layout.record_list_item, null);
         TextView text_note = (TextView) view.findViewById(R.id.textnote);
         TextView audio_note = (TextView) view.findViewById(R.id.audionote);
         text_note.setText(textNotes[i]);
