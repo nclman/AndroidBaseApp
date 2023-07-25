@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 /**
@@ -82,12 +83,14 @@ public class RecordsListFragment extends Fragment {
         Cursor cursor = dbMgr.fetch();
         int numRows = cursor.getCount();
 
+        String[] ids    = new String[numRows];
         String[] texts  = new String[numRows];
         String[] audios = new String[numRows];
 
         int i = 0;
 
         while (cursor.moveToNext()) {
+            ids[i]    = cursor.getString(0);
             texts[i]  = cursor.getString(1);
             audios[i] = cursor.getString(2);
             Log.i(TAG, texts[i] + ": " + audios[i]);
@@ -97,7 +100,7 @@ public class RecordsListFragment extends Fragment {
         listView = (ListView) getView().findViewById(R.id.list_view);
         //listView.setEmptyView(getView().findViewById(R.id.empty));
 
-        adapter = new ListViewAdapter(this.getContext(), texts, audios);
+        adapter = new ListViewAdapter(this.getContext(), ids, texts, audios);
         adapter.notifyDataSetChanged();
 
         listView.setAdapter(adapter);
@@ -109,5 +112,31 @@ public class RecordsListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         refreshData();
+      
+        listView.setClickable(true);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            // One click to perhaps play audio and display full text message in a pop-up
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //Object o = listView.getItemAtPosition(position);
+
+                Log.i("OnClick", "position:" + position + " id: " + id);
+            }
+        });
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            // Long click to provide more options, such as to delete note, edit note, etc.
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.i("LongClick", "position:" + position + " id: " + id);
+                return false;
+            }
+        });
+
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
     }
 }
