@@ -116,8 +116,8 @@ public class RecordsCreateFragment extends Fragment {
 
                 String note = editTextInput.getText().toString();
                 Log.i("SaveNote", "note: "+ note);
-                //binding.tvNotes.setText(note);  // TODO: save to a SQLite db
 
+                // Save text and audio path to database
                 dbManager.insert(note, savedUri.getPath());
             }
         });
@@ -168,9 +168,6 @@ public class RecordsCreateFragment extends Fragment {
     }
 
     private boolean startRecording() {
-        //audioFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Music/recording.3gp";
-        //File audioFileDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
-        //File audioFileDir = Environment.getExternalStorageDirectory();
         File audioFileDir = requireContext().getExternalCacheDir();
         try {
             audioFile = File.createTempFile("record", ".3gp", audioFileDir);

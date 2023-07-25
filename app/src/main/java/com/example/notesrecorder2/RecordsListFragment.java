@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 /**
@@ -83,12 +84,15 @@ public class RecordsListFragment extends Fragment {
         dbManager.open();
         Cursor cursor = dbManager.fetch();
 
+        String[] ids = new String[10];
         String[] texts = new String[10];
         String[] audios = new String[10];
         int i = 0;
 
         if (cursor.moveToFirst()) {
             do {
+                String id = cursor.getString(0);
+                ids[i] = id;
                 String text = cursor.getString(1);
                 texts[i] = text;
                 String audio = cursor.getString(2);
@@ -101,10 +105,36 @@ public class RecordsListFragment extends Fragment {
         listView = (ListView) getView().findViewById(R.id.list_view);
         //listView.setEmptyView(getView().findViewById(R.id.empty));
 
-        adapter = new ListViewAdapter(this.getContext(), texts, audios);
+        adapter = new ListViewAdapter(this.getContext(), ids, texts, audios);
         adapter.notifyDataSetChanged();
 
         listView.setAdapter(adapter);
+
+        listView.setClickable(true);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            // One click to perhaps play audio and display full text message in a pop-up
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //Object o = listView.getItemAtPosition(position);
+
+                Log.i("OnClick", "position:" + position + " id: " + id);
+            }
+        });
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            // Long click to provide more options, such as to delete note, edit note, etc.
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.i("LongClick", "position:" + position + " id: " + id);
+                return false;
+            }
+        });
+
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
 
         dbManager.close();
     }

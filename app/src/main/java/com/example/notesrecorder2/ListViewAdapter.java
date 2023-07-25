@@ -11,12 +11,14 @@ import org.w3c.dom.Text;
 
 public class ListViewAdapter extends BaseAdapter {
     Context context;
+    String idNotes[];
     String textNotes[];
     String audioNotes[];
     LayoutInflater inflter;
 
-    public ListViewAdapter(Context c, String[] textNotes, String[] audioNotes) {
+    public ListViewAdapter(Context c, String[] idNotes, String[] textNotes, String[] audioNotes) {
         this.context = c;
+        this.idNotes = idNotes;
         this.textNotes = textNotes;
         this.audioNotes = audioNotes;
         inflter = LayoutInflater.from(c);
@@ -40,8 +42,10 @@ public class ListViewAdapter extends BaseAdapter {
     @Override
     public View getView(int i, View view, ViewGroup viewgroup) {
         view = inflter.inflate(R.layout.record_list_item, null);
+        TextView id_note = (TextView) view.findViewById(R.id._id);
         TextView text_note = (TextView) view.findViewById(R.id.textnote);
         TextView audio_note = (TextView) view.findViewById(R.id.audionote);
+        id_note.setText(idNotes[i]);
         text_note.setText(textNotes[i]);
         audio_note.setText(audioNotes[i]);
 
