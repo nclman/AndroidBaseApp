@@ -26,13 +26,13 @@ public class DatabaseManager {
     public DatabaseManager open() throws SQLException {
         dbHelper = new DatabaseHelper(context);
         database = dbHelper.getWritableDatabase();
-
+        /*
         String QUERY_VERSION = "SELECT sqlite_version();";
 
         Cursor c = database.rawQuery(QUERY_VERSION, new String[] {});
         if (c.moveToFirst()) {
             Log.v("DATABASE", c.getString(0));
-        }
+        }*/
 
         return this;
     }
@@ -51,9 +51,6 @@ public class DatabaseManager {
     public Cursor fetch() {
         String[] columns = new String[] { DatabaseHelper._ID, DatabaseHelper.TEXT_NOTE, DatabaseHelper.AUDIO_NOTE };
         Cursor cursor = database.query(DatabaseHelper.TABLE_NAME, columns, null, null, null, null, null);
-        if (cursor != null) {
-            cursor.moveToFirst();
-        }
         return cursor;
     }
 

@@ -20,6 +20,7 @@ import android.widget.ListView;
  */
 public class RecordsListFragment extends Fragment {
 
+    private static String TAG = "RecordsListFragment";
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -29,7 +30,6 @@ public class RecordsListFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    private DatabaseManager dbManager;
     private ListView listView;
     private ListViewAdapter adapter;
 
@@ -76,30 +76,25 @@ public class RecordsListFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_records_list, container, false);
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+    public void refreshData() {
+        DatabaseManager dbMgr = new DatabaseManager(this.getContext());
+        dbMgr.open();
 
-        dbManager = new DatabaseManager(this.getContext());
-        dbManager.open();
-        Cursor cursor = dbManager.fetch();
+        Cursor cursor = dbMgr.fetch();
+        int numRows = cursor.getCount();
 
-        String[] ids = new String[10];
-        String[] texts = new String[10];
-        String[] audios = new String[10];
+        String[] ids    = new String[numRows];
+        String[] texts  = new String[numRows];
+        String[] audios = new String[numRows];
+
         int i = 0;
 
-        if (cursor.moveToFirst()) {
-            do {
-                String id = cursor.getString(0);
-                ids[i] = id;
-                String text = cursor.getString(1);
-                texts[i] = text;
-                String audio = cursor.getString(2);
-                audios[i] = audio;
-                i++;
-                Log.i("List", text + ": " + audio);
-            } while (cursor.moveToNext());
+        while (cursor.moveToNext()) {
+            ids[i]    = cursor.getString(0);
+            texts[i]  = cursor.getString(1);
+            audios[i] = cursor.getString(2);
+            Log.i(TAG, texts[i] + ": " + audios[i]);
+            i++;
         }
 
         listView = (ListView) getView().findViewById(R.id.list_view);
@@ -110,6 +105,14 @@ public class RecordsListFragment extends Fragment {
 
         listView.setAdapter(adapter);
 
+        dbMgr.close();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        refreshData();
+      
         listView.setClickable(true);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             // One click to perhaps play audio and display full text message in a pop-up
@@ -135,7 +138,5 @@ public class RecordsListFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
-        dbManager.close();
     }
 }
