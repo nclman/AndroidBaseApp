@@ -5,9 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import org.sqlite.database.sqlite.SQLiteDatabase;
-import android.util.Log;
-
-import java.util.stream.Stream;
 
 public class DatabaseManager {
 
@@ -16,25 +13,23 @@ public class DatabaseManager {
     }
 
     private DatabaseHelper dbHelper;
-    private Context context;
+    private final Context context;
     private SQLiteDatabase database;
 
     public DatabaseManager(Context c) {
         context = c;
     }
 
-    public DatabaseManager open() throws SQLException {
+    public void open() throws SQLException {
         dbHelper = new DatabaseHelper(context);
         database = dbHelper.getWritableDatabase();
-
+        /*
         String QUERY_VERSION = "SELECT sqlite_version();";
 
         Cursor c = database.rawQuery(QUERY_VERSION, new String[] {});
         if (c.moveToFirst()) {
             Log.v("DATABASE", c.getString(0));
-        }
-
-        return this;
+        }*/
     }
 
     public void close() {
@@ -50,19 +45,14 @@ public class DatabaseManager {
 
     public Cursor fetch() {
         String[] columns = new String[] { DatabaseHelper._ID, DatabaseHelper.TEXT_NOTE, DatabaseHelper.AUDIO_NOTE };
-        Cursor cursor = database.query(DatabaseHelper.TABLE_NAME, columns, null, null, null, null, null);
-        if (cursor != null) {
-            cursor.moveToFirst();
-        }
-        return cursor;
+        return database.query(DatabaseHelper.TABLE_NAME, columns, null, null, null, null, null);
     }
 
     public int update(long _id, String text_note, String audio_note) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(DatabaseHelper.TEXT_NOTE, text_note);
         contentValues.put(DatabaseHelper.AUDIO_NOTE, audio_note);
-        int i = database.update(DatabaseHelper.TABLE_NAME, contentValues, DatabaseHelper._ID + " = " + _id, null);
-        return i;
+        return database.update(DatabaseHelper.TABLE_NAME, contentValues, DatabaseHelper._ID + " = " + _id, null);
     }
 
     public void delete(long _id) {
