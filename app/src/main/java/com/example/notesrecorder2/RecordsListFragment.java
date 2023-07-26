@@ -12,6 +12,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -20,7 +23,7 @@ import android.widget.ListView;
  */
 public class RecordsListFragment extends Fragment {
 
-    private static String TAG = "RecordsListFragment";
+    private static final String TAG = "RecordsListFragment";
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -31,12 +34,11 @@ public class RecordsListFragment extends Fragment {
     private String mParam2;
 
     private ListView listView;
-    private ListViewAdapter adapter;
 
-    final String[] from = new String[] { DatabaseHelper._ID,
-            DatabaseHelper.TEXT_NOTE, DatabaseHelper.AUDIO_NOTE };
+    //final String[] from = new String[] { DatabaseHelper._ID,
+    //        DatabaseHelper.TEXT_NOTE, DatabaseHelper.AUDIO_NOTE };
 
-    final int[] to = new int[] { R.id._id, R.id.textnote, R.id.audionote };
+    //final int[] to = new int[] { R.id._id, R.id.textnote, R.id.audionote };
 
     public RecordsListFragment() {
         // Required empty public constructor
@@ -76,6 +78,18 @@ public class RecordsListFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_records_list, container, false);
     }
 
+    private void toggleViewVisibility(boolean hasRows) {
+        ListView listView = (ListView) getView().findViewById(R.id.list_view);
+        TextView textView = (TextView) getView().findViewById(R.id.empty);
+        if (hasRows) {
+            listView.setVisibility(View.VISIBLE);
+            textView.setVisibility(View.INVISIBLE);
+        } else {
+            listView.setVisibility(View.INVISIBLE);
+            textView.setVisibility(View.VISIBLE);
+        }
+    }
+
     public void refreshData() {
         DatabaseManager dbMgr = new DatabaseManager(this.getContext());
         dbMgr.open();
@@ -83,28 +97,29 @@ public class RecordsListFragment extends Fragment {
         Cursor cursor = dbMgr.fetch();
         int numRows = cursor.getCount();
 
-        String[] ids    = new String[numRows];
-        String[] texts  = new String[numRows];
-        String[] audios = new String[numRows];
+        if (numRows > 0) {
+            String[] ids    = new String[numRows];
+            String[] texts  = new String[numRows];
+            String[] audios = new String[numRows];
 
-        int i = 0;
+            int i = 0;
 
-        while (cursor.moveToNext()) {
-            ids[i]    = cursor.getString(0);
-            texts[i]  = cursor.getString(1);
-            audios[i] = cursor.getString(2);
-            Log.i(TAG, texts[i] + ": " + audios[i]);
-            i++;
+            while (cursor.moveToNext()) {
+                ids[i]    = cursor.getString(0);
+                texts[i]  = cursor.getString(1);
+                audios[i] = cursor.getString(2);
+                Log.i(TAG, texts[i] + ": " + audios[i]);
+                i++;
+            }
+
+            listView = (ListView) getView().findViewById(R.id.list_view);
+            ListViewAdapter adapter = new ListViewAdapter(this.getContext(), ids, texts, audios);
+            adapter.notifyDataSetChanged();
+
+            listView.setAdapter(adapter);
         }
 
-        listView = (ListView) getView().findViewById(R.id.list_view);
-        //listView.setEmptyView(getView().findViewById(R.id.empty));
-
-        adapter = new ListViewAdapter(this.getContext(), ids, texts, audios);
-        adapter.notifyDataSetChanged();
-
-        listView.setAdapter(adapter);
-
+        toggleViewVisibility(numRows > 0);
         dbMgr.close();
     }
 
@@ -112,7 +127,11 @@ public class RecordsListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         refreshData();
-      
+
+        // TODO: Maybe the next portion is not required anymore? We have edit/delete buttons now.
+        // See ListViewAdapter.java
+
+        /* Not needed anymore?
         listView.setClickable(true);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             // One click to perhaps play audio and display full text message in a pop-up
@@ -131,7 +150,7 @@ public class RecordsListFragment extends Fragment {
                 Log.i("LongClick", "position:" + position + " id: " + id);
                 return false;
             }
-        });
+        });*/
 
     }
 
