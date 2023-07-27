@@ -1,6 +1,7 @@
 package com.example.notesrecorder2;
 
-import android.content.Context;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Bundle;
 
@@ -11,11 +12,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -92,6 +91,8 @@ public class RecordsListFragment extends Fragment {
         }
     }
 
+    private boolean hasInitializedAdapter;
+
     public void refreshData() {
         DatabaseManager dbMgr = new DatabaseManager(this.mViewPagerAdapter.getFragmentActivity());
         dbMgr.open();
@@ -110,7 +111,7 @@ public class RecordsListFragment extends Fragment {
                 ids[i]    = cursor.getString(0);
                 texts[i]  = cursor.getString(1);
                 audios[i] = cursor.getString(2);
-                Log.i(TAG, texts[i] + ": " + audios[i]);
+                //Log.i(TAG, texts[i] + ": " + audios[i]);
                 i++;
             }
 
@@ -118,14 +119,61 @@ public class RecordsListFragment extends Fragment {
                 // The view still hasn't appeared. Let's not update it first.
                 return;
             }
+
             ListView listView = (ListView) getView().findViewById(R.id.list_view);
-            ListViewAdapter adapter = new ListViewAdapter(this.getContext(), ids, texts, audios);
+
+            if (!hasInitializedAdapter) {
+                ListViewAdapter adapter = new ListViewAdapter(this, this.getContext());
+                listView.setAdapter(adapter);
+                hasInitializedAdapter = true;
+            }
+
+            ListViewAdapter adapter = (ListViewAdapter)listView.getAdapter();
+            adapter.idNotes    = ids;
+            adapter.textNotes  = texts;
+            adapter.audioNotes = audios;
             adapter.notifyDataSetChanged();
-            listView.setAdapter(adapter);
         }
 
         toggleViewVisibility(numRows > 0);
         dbMgr.close();
+    }
+
+    private void doDeleteNote(long _id) {
+        DatabaseManager dbMgr = new DatabaseManager(this.mViewPagerAdapter.getFragmentActivity());
+        dbMgr.open();
+        dbMgr.delete(_id);
+        dbMgr.close();
+        refreshData();
+    }
+
+    public void notifyDeleteNote(long _id) {
+        Log.d(TAG, "(notify) Delete: " + _id);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getView().getContext());
+        builder.setTitle("Delete")
+                .setMessage("Do you wish to delete this note?")
+                .setPositiveButton("DELETE", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        doDeleteNote(_id);
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    public void notifyEditNote(long _id, String textNote, String audioNote) {
+        Log.d(TAG, "(notify) Edit: " + _id + ", withContent: " + textNote + ", withAudioNote: " + audioNote);
+        // TODO: Not implemented
+        Log.e(TAG, "Not implemented");
     }
 
     @Override
