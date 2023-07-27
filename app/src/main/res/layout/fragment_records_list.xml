@@ -6,26 +6,28 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".RecordsListFragment">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="16dp">
-
-        <!-- TODO: Update blank fragment layout -->
+        android:layout_height="wrap_content"
+        android:paddingTop="84dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="8dp"
+        android:orientation="vertical"
+        >
         <TextView
             android:id="@+id/list_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:paddingTop="70dp"
             android:text="@string/records_list_fragment"
             android:textColor="@color/blue_300"
             android:textStyle="bold" />
 
         <ListView
             android:id="@+id/list_view"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:divider="@color/white"
             android:dividerHeight="1dp"
             android:clipToPadding="false"
@@ -37,13 +39,16 @@
             android:id="@+id/empty"
             android:layout_width="match_parent"
             android:layout_height="fill_parent"
-            android:layout_centerInParent="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
             android:gravity="center"
             android:text="No notes recorded."
-            android:visibility="invisible"
-            android:textSize="16dp"
             android:textColor="@color/blue_300"
-            app:layout_constraintTop_toBottomOf="@id/list_header" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            android:textSize="16dp"
+            android:visibility="invisible"
+            app:layout_constraintTop_toBottomOf="@id/list_header"
+            tools:layout_editor_absoluteX="16dp" />
+
+    </LinearLayout>
 
 </RelativeLayout>

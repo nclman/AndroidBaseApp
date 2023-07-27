@@ -1,5 +1,6 @@
 package com.example.notesrecorder2;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
 
@@ -33,7 +34,7 @@ public class RecordsListFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    private ListView listView;
+    private ViewPagerAdapter mViewPagerAdapter;
 
     //final String[] from = new String[] { DatabaseHelper._ID,
     //        DatabaseHelper.TEXT_NOTE, DatabaseHelper.AUDIO_NOTE };
@@ -53,12 +54,13 @@ public class RecordsListFragment extends Fragment {
      * @return A new instance of fragment RecordsListFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static RecordsListFragment newInstance(String param1, String param2) {
+    public static RecordsListFragment newInstance(ViewPagerAdapter pagerAdapter, String param1, String param2) {
         RecordsListFragment fragment = new RecordsListFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
+        fragment.mViewPagerAdapter = pagerAdapter;
         return fragment;
     }
 
@@ -91,7 +93,7 @@ public class RecordsListFragment extends Fragment {
     }
 
     public void refreshData() {
-        DatabaseManager dbMgr = new DatabaseManager(this.getContext());
+        DatabaseManager dbMgr = new DatabaseManager(this.mViewPagerAdapter.getFragmentActivity());
         dbMgr.open();
 
         Cursor cursor = dbMgr.fetch();
@@ -112,10 +114,13 @@ public class RecordsListFragment extends Fragment {
                 i++;
             }
 
-            listView = (ListView) getView().findViewById(R.id.list_view);
+            if (getView() == null) {
+                // The view still hasn't appeared. Let's not update it first.
+                return;
+            }
+            ListView listView = (ListView) getView().findViewById(R.id.list_view);
             ListViewAdapter adapter = new ListViewAdapter(this.getContext(), ids, texts, audios);
             adapter.notifyDataSetChanged();
-
             listView.setAdapter(adapter);
         }
 
