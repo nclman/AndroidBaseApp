@@ -1,5 +1,7 @@
 package com.example.notesrecorder2;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Bundle;
 
@@ -10,11 +12,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -33,7 +33,7 @@ public class RecordsListFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    private ListView listView;
+    private ViewPagerAdapter mViewPagerAdapter;
 
     //final String[] from = new String[] { DatabaseHelper._ID,
     //        DatabaseHelper.TEXT_NOTE, DatabaseHelper.AUDIO_NOTE };
@@ -53,12 +53,13 @@ public class RecordsListFragment extends Fragment {
      * @return A new instance of fragment RecordsListFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static RecordsListFragment newInstance(String param1, String param2) {
+    public static RecordsListFragment newInstance(ViewPagerAdapter pagerAdapter, String param1, String param2) {
         RecordsListFragment fragment = new RecordsListFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
+        fragment.mViewPagerAdapter = pagerAdapter;
         return fragment;
     }
 
@@ -90,8 +91,10 @@ public class RecordsListFragment extends Fragment {
         }
     }
 
+    private boolean hasInitializedAdapter;
+
     public void refreshData() {
-        DatabaseManager dbMgr = new DatabaseManager(this.getContext());
+        DatabaseManager dbMgr = new DatabaseManager(this.mViewPagerAdapter.getFragmentActivity());
         dbMgr.open();
 
         Cursor cursor = dbMgr.fetch();
@@ -108,19 +111,69 @@ public class RecordsListFragment extends Fragment {
                 ids[i]    = cursor.getString(0);
                 texts[i]  = cursor.getString(1);
                 audios[i] = cursor.getString(2);
-                Log.i(TAG, texts[i] + ": " + audios[i]);
+                //Log.i(TAG, texts[i] + ": " + audios[i]);
                 i++;
             }
 
-            listView = (ListView) getView().findViewById(R.id.list_view);
-            ListViewAdapter adapter = new ListViewAdapter(this.getContext(), ids, texts, audios);
-            adapter.notifyDataSetChanged();
+            if (getView() == null) {
+                // The view still hasn't appeared. Let's not update it first.
+                return;
+            }
 
-            listView.setAdapter(adapter);
+            ListView listView = (ListView) getView().findViewById(R.id.list_view);
+
+            if (!hasInitializedAdapter) {
+                ListViewAdapter adapter = new ListViewAdapter(this, this.getContext());
+                listView.setAdapter(adapter);
+                hasInitializedAdapter = true;
+            }
+
+            ListViewAdapter adapter = (ListViewAdapter)listView.getAdapter();
+            adapter.idNotes    = ids;
+            adapter.textNotes  = texts;
+            adapter.audioNotes = audios;
+            adapter.notifyDataSetChanged();
         }
 
         toggleViewVisibility(numRows > 0);
         dbMgr.close();
+    }
+
+    private void doDeleteNote(long _id) {
+        DatabaseManager dbMgr = new DatabaseManager(this.mViewPagerAdapter.getFragmentActivity());
+        dbMgr.open();
+        dbMgr.delete(_id);
+        dbMgr.close();
+        refreshData();
+    }
+
+    public void notifyDeleteNote(long _id) {
+        Log.d(TAG, "(notify) Delete: " + _id);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getView().getContext());
+        builder.setTitle("Delete")
+                .setMessage("Do you wish to delete this note?")
+                .setPositiveButton("DELETE", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        doDeleteNote(_id);
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    public void notifyEditNote(long _id, String textNote, String audioNote) {
+        Log.d(TAG, "(notify) Edit: " + _id + ", withContent: " + textNote + ", withAudioNote: " + audioNote);
+        // TODO: Not implemented
+        Log.e(TAG, "Not implemented");
     }
 
     @Override

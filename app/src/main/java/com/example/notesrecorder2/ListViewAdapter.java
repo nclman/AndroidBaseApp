@@ -10,25 +10,29 @@ import android.widget.Button;
 import android.widget.TextView;
 
 public class ListViewAdapter extends BaseAdapter {
+
     private static final String TAG = "ListViewAdapter";
-    private final String[] idNotes;
-    private final String[] textNotes;
-    private final String[] audioNotes;
+    public String[] idNotes;
+    public String[] textNotes;
+    public String[] audioNotes;
     private final LayoutInflater inflater;
+    private final RecordsListFragment mListFragment;
 
     private static final int BUTTON_DELETE_BASE_ID = 11011000;
     private static final int BUTTON_EDIT_BASE_ID = 55055000;
 
-    public ListViewAdapter(Context c, String[] idNotes, String[] textNotes, String[] audioNotes) {
-        this.idNotes = idNotes;
-        this.textNotes = textNotes;
-        this.audioNotes = audioNotes;
-        inflater = LayoutInflater.from(c);
+    public ListViewAdapter(RecordsListFragment listFragment, Context c) {
+        this.mListFragment = listFragment;
+        this.inflater = LayoutInflater.from(c);
     }
 
     @Override
     public int getCount() {
-        return textNotes.length;
+        if (this.textNotes == null) {
+            return 0;
+        } else {
+            return textNotes.length;
+        }
     }
 
     @Override
@@ -78,12 +82,15 @@ public class ListViewAdapter extends BaseAdapter {
     private void onDeleteClick(View v) {
         int selectedIndex = v.getId() - BUTTON_DELETE_BASE_ID;
         Log.v(TAG, "Selected Index (delete): " + selectedIndex);
-        //TODO: perform the deletion of the item
+        this.mListFragment.notifyDeleteNote(Long.parseLong(this.idNotes[selectedIndex]));
     }
 
     private void onEditClick(View v) {
         int selectedIndex = v.getId() - BUTTON_EDIT_BASE_ID;
         Log.v(TAG, "Selected Index (edit): " + selectedIndex);
-        //TODO: perform the editing of the item
+        this.mListFragment.notifyEditNote(
+                Long.parseLong(this.idNotes[selectedIndex]),
+                this.textNotes[selectedIndex],
+                this.audioNotes[selectedIndex]);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.notesrecorder2;
 
+import android.content.Context;
 import android.util.Log;
 
 import androidx.fragment.app.Fragment;
@@ -19,18 +20,22 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
     };
 
     private Fragment mFragments[];
+    private FragmentActivity mMainActivity;
 
     public ViewPagerAdapter(FragmentActivity fragmentActivity) {
         super(fragmentActivity);
+        this.mMainActivity = fragmentActivity;
         initViewFragments();
+    }
+
+    public Context getFragmentActivity() {
+        return this.mMainActivity.getApplicationContext();
     }
 
     private void initViewFragments() {
         this.mFragments = new Fragment[ViewFragments.values().length];
-        this.mFragments[ViewFragments.RECORDS_LIST.ordinal()] = RecordsListFragment.newInstance("unused1", "unused2");
-        RecordsCreateFragment createFragment = RecordsCreateFragment.newInstance("unused1", "unused2");
-        createFragment.setViewPagerAdapter(this);
-        this.mFragments[ViewFragments.RECORDS_CREATE.ordinal()] = createFragment;
+        this.mFragments[ViewFragments.RECORDS_LIST.ordinal()]   = RecordsListFragment.newInstance(this, "unused1", "unused2");
+        this.mFragments[ViewFragments.RECORDS_CREATE.ordinal()] = RecordsCreateFragment.newInstance(this, "unused1", "unused2");
     }
 
     public void refreshListFragment() {
