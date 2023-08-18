@@ -120,9 +120,14 @@ public class RecordsListFragment extends Fragment {
                     cursor.getString(2)));
         }
 
+        if (getView() == null) {
+            // The view still hasn't appeared. Let's not update it first.
+            return;
+        }
+      
         ListView listView = (ListView) getView().findViewById(R.id.list_view);
 
-        if (hasInitializedAdapter == false) {
+        if (!hasInitializedAdapter) {
             ListViewAdapter adapter = new ListViewAdapter(this, this.getContext());
             listView.setAdapter(adapter);
             hasInitializedAdapter = true;
@@ -147,7 +152,7 @@ public class RecordsListFragment extends Fragment {
         // delete item in database
         dbMgr.delete(Integer.parseInt(e.get_id()));
         // delete audio item
-        if (e.get_audio() != null && e.get_audio().isEmpty() == false) {
+        if (e.get_audio() != null && !e.get_audio().isEmpty()) {
             File f = new File(e.get_audio());
             if (f.exists()) {
                 Log.v("doDeleteNote", f.getName());
