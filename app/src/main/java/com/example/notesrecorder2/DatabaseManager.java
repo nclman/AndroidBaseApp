@@ -7,6 +7,17 @@ import android.database.Cursor;
 import android.database.SQLException;
 import org.sqlite.database.sqlite.SQLiteDatabase;
 
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
 public class DatabaseManager {
     private static final String TAG = "DataBaseManager";
 
@@ -14,15 +25,17 @@ public class DatabaseManager {
         System.loadLibrary("sqliteX");
     }
 
-    private static volatile DatabaseManager instance;
+    private static volatile DatabaseManager instance = null;
     private DatabaseHelper dbHelper;
     private final Context context;
     private SQLiteDatabase database;
     private CloudDataBaseManager cloudDb;
+    private CryptoManager cryptoMgr;
 
     public DatabaseManager(Context c) {
         this.context = c;
         this.cloudDb = new CloudDataBaseManager(c);
+        this.cryptoMgr = new CryptoManager(c);
         this.instance = this;
     }
 
@@ -50,6 +63,8 @@ public class DatabaseManager {
     }
 
     public long insertDbOnly(String text_note, String audio_note, String doc_id) {
+        // Data already encrypted by this point
+
         ContentValues contentValue = new ContentValues();
         contentValue.put(DatabaseHelper.TEXT_NOTE, text_note);
         contentValue.put(DatabaseHelper.AUDIO_NOTE, audio_note);
@@ -59,7 +74,11 @@ public class DatabaseManager {
     }
 
     public void insert(String text_note, String audio_note) {
-        this.cloudDb.insert(text_note, audio_note);
+        // TODO: Encrypt data before storing
+        String e_text = this.cryptoMgr.encrypt(text_note);
+        String e_audio = this.cryptoMgr.encrypt(audio_note);
+
+        this.cloudDb.insert(e_text, e_audio);
     }
 
     public Cursor fetch() {
