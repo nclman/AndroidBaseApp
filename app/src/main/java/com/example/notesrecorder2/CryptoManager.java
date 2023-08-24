@@ -1,11 +1,12 @@
 package com.example.notesrecorder2;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
-import android.system.ErrnoException;
 import android.util.Log;
 
+import com.google.android.gms.common.util.Hex;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
@@ -32,23 +33,32 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.spec.IvParameterSpec;
+
+// Q: How can we enable encryption across multiple devices?
+// A: We will use public key cryptography (ECC) for key exchange.
 
 public class CryptoManager {
     private static final String TAG = "CryptoManager";
 
+    private final boolean isDebug;
     private static final String keyAlias = "encryptKey";
+    private static final String provider = "AndroidKeyStore";
     private static final int keySize = 128;
     private KeyStore ks;
     private KeyStore.Entry entry;
     private SecretKey encryptKey = null;
 
-    // Should KeyStore. But how to support multiple-devices?
     public CryptoManager(Context c) {
-        // Retrieve key from KeyStore
-        for (Provider provider : Security.getProviders()) {
-            Log.i(TAG, "Provider: " + provider.getName());
+
+        isDebug = (c.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        if (isDebug) {
+            for (Provider provider : Security.getProviders()) {
+                Log.i(TAG, "Provider: " + provider.getName());
+            }
         }
+
+        // Retrieve key from KeyStore
         try {
             ks = KeyStore.getInstance("AndroidKeyStore");
         } catch (KeyStoreException e) {
@@ -64,15 +74,17 @@ public class CryptoManager {
             throw new RuntimeException(e);
         }
 
-        Enumeration<String> stringEnum = null;
-        try {
-            stringEnum = ks.aliases();
-        } catch (KeyStoreException e) {
-            throw new RuntimeException(e);
-        }
-        while (stringEnum.hasMoreElements()) {
-            String s = stringEnum.nextElement();
-            Log.d(TAG, "Alias: " + s);
+        if (isDebug) {
+            Enumeration<String> stringEnum = null;
+            try {
+                stringEnum = ks.aliases();
+            } catch (KeyStoreException e) {
+                throw new RuntimeException(e);
+            }
+            while (stringEnum.hasMoreElements()) {
+                String s = stringEnum.nextElement();
+                Log.d(TAG, "Alias: " + s);
+            }
         }
 
         try {
@@ -107,6 +119,7 @@ public class CryptoManager {
         }
     }
 
+    // This is for "text" and "audio" notes
     public String encrypt(String data) {
         if (data == null || data.isEmpty())
             return null;
@@ -130,7 +143,7 @@ public class CryptoManager {
         } catch (NoSuchPaddingException e) {
             throw new RuntimeException(e);
         }
-
+        
         try {
             cipher.init(Cipher.ENCRYPT_MODE, key);
         } catch (InvalidKeyException e) {
@@ -146,11 +159,19 @@ public class CryptoManager {
             throw new RuntimeException(e);
         }
 
-        Log.d(TAG, "encrypt in: " + data + " out: " + out.toString());
-        return out.toString();
+        // get IV
+        byte[] iv = cipher.getIV();
+
+        // Convert to Hex string
+        String out_s = Hex.bytesToStringUppercase(out) + "." + Hex.bytesToStringUppercase(iv);
+        Log.d(TAG, "encrypt in: " + data + " out: " + out_s + "IV size:" + iv.length);
+        return out_s;
     }
 
     public String decrypt(String data) {
+        if (data == null || data.isEmpty())
+            return null;
+
         SecretKey key = ((KeyStore.SecretKeyEntry) entry).getSecretKey();
         Cipher cipher;
 
@@ -162,31 +183,37 @@ public class CryptoManager {
             throw new RuntimeException(e);
         }
 
+        String[] arr = data.split("\\.");
+
+        IvParameterSpec iv = new IvParameterSpec(Hex.stringToBytes(arr[1]));
         try {
-            cipher.init(Cipher.DECRYPT_MODE, key);
+            cipher.init(Cipher.DECRYPT_MODE, key, iv);
         } catch (InvalidKeyException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidAlgorithmParameterException e) {
             throw new RuntimeException(e);
         }
 
         byte[] out = new byte[0];
         try {
-            out = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
+            // Convert Hex string to byte array first
+            out = cipher.doFinal(Hex.stringToBytes(arr[0]));
         } catch (BadPaddingException e) {
             throw new RuntimeException(e);
         } catch (IllegalBlockSizeException e) {
             throw new RuntimeException(e);
         }
 
-        Log.d(TAG, "decrypt in: " + data + " out: " + out.toString());
-        return out.toString();
+        String out_s = new String(out);
+        Log.d(TAG, "decrypt in: " + data + " out: " + out_s);
+        return out_s;
     }
 
     private void generateKey() {
         // if key does not exists, create it
         KeyGenerator kg = null;
         try {
-            kg = KeyGenerator.getInstance(
-                    KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+            kg = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, provider);
         } catch (NoSuchAlgorithmException ex) {
             throw new RuntimeException(ex);
         } catch (NoSuchProviderException ex) {
