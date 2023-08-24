@@ -41,6 +41,7 @@ import javax.crypto.spec.IvParameterSpec;
 public class CryptoManager {
     private static final String TAG = "CryptoManager";
 
+    private static volatile CryptoManager instance = null;
     private final boolean isDebug;
     private static final String keyAlias = "encryptKey";
     private static final String provider = "AndroidKeyStore";
@@ -119,6 +120,13 @@ public class CryptoManager {
         }
     }
 
+    public static CryptoManager getInstance(Context c) {
+        if (instance == null) {
+            instance = new CryptoManager(c);
+        }
+        return instance;
+    }
+
     // This is for "text" and "audio" notes
     public String encrypt(String data) {
         if (data == null || data.isEmpty())
@@ -143,7 +151,7 @@ public class CryptoManager {
         } catch (NoSuchPaddingException e) {
             throw new RuntimeException(e);
         }
-        
+
         try {
             cipher.init(Cipher.ENCRYPT_MODE, key);
         } catch (InvalidKeyException e) {

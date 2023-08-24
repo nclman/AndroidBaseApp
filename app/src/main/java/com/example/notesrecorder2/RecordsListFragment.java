@@ -105,9 +105,10 @@ public class RecordsListFragment extends Fragment {
 
         if (getView() == null) return;
 
-        //DatabaseManager dbMgr = new DatabaseManager(this.mViewPagerAdapter.getFragmentActivity());
         DatabaseManager dbMgr = DatabaseManager.getInstance(this.mViewPagerAdapter.getFragmentActivity());
         dbMgr.open();
+
+        CryptoManager cMgr = CryptoManager.getInstance(getContext());
 
         Cursor cursor = dbMgr.fetch();
         int numRows = cursor.getCount();
@@ -116,8 +117,8 @@ public class RecordsListFragment extends Fragment {
 
         while (cursor.moveToNext()) {
             llist.add(new RecordsListElement(cursor.getString(0),
-                    cursor.getString(1),
-                    cursor.getString(2)));
+                    cMgr.decrypt(cursor.getString(1)),
+                    cMgr.decrypt(cursor.getString(2))));
         }
 
         ListView listView = (ListView) getView().findViewById(R.id.list_view);

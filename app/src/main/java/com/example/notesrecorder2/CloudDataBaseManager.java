@@ -97,7 +97,7 @@ public class CloudDataBaseManager {
     }
 
     // This method adds an entry in Firebase DB.
-    // TODO: If there is a media file, we need to store it in Firebase Cloud Storage
+    // If there is a media file, we need to store it in Firebase Cloud Storage
     public void insert(String text, String audio_path) {
         Map<String, Object> user = new HashMap<>();
         user.put("text", text);

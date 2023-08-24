@@ -35,7 +35,7 @@ public class DatabaseManager {
     public DatabaseManager(Context c) {
         this.context = c;
         this.cloudDb = new CloudDataBaseManager(c);
-        this.cryptoMgr = new CryptoManager(c);
+        this.cryptoMgr = CryptoManager.getInstance(c);
         this.instance = this;
     }
 
@@ -74,7 +74,7 @@ public class DatabaseManager {
     }
 
     public void insert(String text_note, String audio_note) {
-        // TODO: Encrypt data before storing
+        // Encrypt data before storing
         String e_text = this.cryptoMgr.encrypt(text_note);
         String e_audio = this.cryptoMgr.encrypt(audio_note);
 
