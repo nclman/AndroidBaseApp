@@ -64,6 +64,10 @@ public class DatabaseManager {
 
     public long insertDbOnly(String text_note, String audio_note, String doc_id) {
         // Data already encrypted by this point
+        if (text_note == null)
+            text_note = "";
+        if (audio_note == null)
+            audio_note = "";
 
         ContentValues contentValue = new ContentValues();
         contentValue.put(DatabaseHelper.TEXT_NOTE, text_note);
@@ -74,11 +78,7 @@ public class DatabaseManager {
     }
 
     public void insert(String text_note, String audio_note) {
-        // Encrypt data before storing
-        String e_text = this.cryptoMgr.encrypt(text_note);
-        String e_audio = this.cryptoMgr.encrypt(audio_note);
-
-        this.cloudDb.insert(e_text, e_audio);
+        this.cloudDb.insert(text_note, audio_note);
     }
 
     public Cursor fetch() {

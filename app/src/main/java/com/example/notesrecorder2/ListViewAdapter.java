@@ -63,7 +63,7 @@ public class ListViewAdapter extends BaseAdapter {
 
         RecordsListElement e = notesList.get(i);
         id_note.setText(e.get_id());
-        if (e.get_txt().length() > 20) {
+        if (e.get_txt() != null && e.get_txt().length() > 20) {
             text_note.setText(e.get_txt().substring(0, 20) + "...");
             text_note.setClickable(true);
         } else {
@@ -149,12 +149,14 @@ public class ListViewAdapter extends BaseAdapter {
 
     private void playAudio(int index) {
         Uri uri = Uri.fromFile(new File(this.notesList.get(index).get_audio()));
+        Log.d(TAG, "Playing " + uri.getPath());
         MediaPlayer mp = MediaPlayer.create(this.mListFragment.getContext(), uri);
         mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 mp.stop();
                 mp.release();
+                Log.d(TAG, "Play completed " + uri.getPath());
             }
         });
 

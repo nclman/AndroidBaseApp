@@ -7,6 +7,11 @@ import android.security.keystore.KeyProperties;
 import android.util.Log;
 
 import com.google.android.gms.common.util.Hex;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
@@ -90,6 +95,7 @@ public class CryptoManager {
 
         try {
             entry = ks.getEntry(keyAlias, null);
+            encryptKey = (SecretKey) ks.getKey(keyAlias, null);
         } catch (NullPointerException e) {
             Log.w(TAG, "encryptKey not found. Creating one...");
         } catch (UnrecoverableEntryException e) {
@@ -111,12 +117,13 @@ public class CryptoManager {
             } catch (UnrecoverableKeyException e) {
                 throw new RuntimeException(e);
             }
+            Log.d(TAG, "Key generated");
+        } else {
+            Log.d(TAG, "Key retrieved");
         }
 
         if (encryptKey == null) {
             Log.d(TAG, "Failed to get encryptKey");
-        } else {
-            Log.d(TAG, "Key retrieved/create");
         }
     }
 
@@ -191,6 +198,7 @@ public class CryptoManager {
             throw new RuntimeException(e);
         }
 
+        Log.d(TAG, "decrypt in: " + data);
         String[] arr = data.split("\\.");
 
         IvParameterSpec iv = new IvParameterSpec(Hex.stringToBytes(arr[1]));
@@ -215,6 +223,94 @@ public class CryptoManager {
         String out_s = new String(out);
         Log.d(TAG, "decrypt in: " + data + " out: " + out_s);
         return out_s;
+    }
+
+    // encrypt audio file to be uploaded to cloud.
+    // Return iv used in encryption.
+    //
+    public byte[] encryptFile(File inFile, File outFile) {
+        SecretKey key = ((KeyStore.SecretKeyEntry) entry).getSecretKey();
+        Cipher cipher;
+
+        try {
+            cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchPaddingException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+        } catch (InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
+
+        try (FileInputStream inStream = new FileInputStream(inFile)) {
+            byte[] inputBytes = new byte[(int) inFile.length()];
+            inStream.read(inputBytes);
+
+            byte[] outBytes = cipher.doFinal(inputBytes);
+
+            FileOutputStream outStream = new FileOutputStream(outFile);
+            outStream.write(outBytes);
+
+            outStream.close();
+            inStream.close();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalBlockSizeException e) {
+            throw new RuntimeException(e);
+        } catch (BadPaddingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return cipher.getIV();
+    }
+
+    public void decryptFile(File inFile, File outFile, byte[] ivBytes) {
+        SecretKey key = ((KeyStore.SecretKeyEntry) entry).getSecretKey();
+        Cipher cipher;
+
+        try {
+            cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchPaddingException e) {
+            throw new RuntimeException(e);
+        }
+
+        IvParameterSpec iv = new IvParameterSpec(ivBytes);
+        try {
+            cipher.init(Cipher.DECRYPT_MODE, key, iv);
+        } catch (InvalidKeyException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new RuntimeException(e);
+        }
+
+        try (FileInputStream inStream = new FileInputStream(inFile)) {
+            byte[] inputBytes = new byte[(int) inFile.length()];
+            inStream.read(inputBytes);
+
+            byte[] outBytes = cipher.doFinal(inputBytes);
+
+            FileOutputStream outStream = new FileOutputStream(outFile);
+            outStream.write(outBytes);
+
+            outStream.close();
+            inStream.close();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalBlockSizeException e) {
+            throw new RuntimeException(e);
+        } catch (BadPaddingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void generateKey() {
