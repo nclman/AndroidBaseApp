@@ -111,11 +111,11 @@ public class CryptoManager {
             try {
                 encryptKey = (SecretKey) ks.getKey(keyAlias, null);
             } catch (KeyStoreException e) {
-                throw new RuntimeException(e);
+                Log.e(TAG, "KeyStoreException" + e);
             } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
+                Log.e(TAG, "NoSuchAlgorithmException" + e);
             } catch (UnrecoverableKeyException e) {
-                throw new RuntimeException(e);
+                Log.e(TAG, "UnrecoverableKeyException" + e);
             }
             Log.d(TAG, "Key generated");
         } else {
@@ -123,7 +123,7 @@ public class CryptoManager {
         }
 
         if (encryptKey == null) {
-            Log.d(TAG, "Failed to get encryptKey");
+            Log.e(TAG, "Failed to get encryptKey");
         }
     }
 
@@ -142,36 +142,32 @@ public class CryptoManager {
         SecretKey key = null;
         try {
             key = (SecretKey) ks.getKey(keyAlias, null);
-        } catch (KeyStoreException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (UnrecoverableKeyException e) {
-            throw new RuntimeException(e);
+        } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
+            Log.e(TAG, "encrypt: Error getting key " + e);
+            return null;
         }
         Cipher cipher;
 
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchPaddingException e) {
-            throw new RuntimeException(e);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            Log.e(TAG, "encrypt: Error getInstance " + e);
+            return null;
         }
 
         try {
             cipher.init(Cipher.ENCRYPT_MODE, key);
         } catch (InvalidKeyException e) {
-            throw new RuntimeException(e);
+            Log.e(TAG, "encrypt: Cipher.init error " + e);
+            return null;
         }
 
         byte[] out = new byte[0];
         try {
             out = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
-        } catch (BadPaddingException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalBlockSizeException e) {
-            throw new RuntimeException(e);
+        } catch (BadPaddingException | IllegalBlockSizeException e) {
+            Log.e(TAG, "encrypt: Cipher.doFinal error " + e);
+            return null;
         }
 
         // get IV
@@ -192,32 +188,30 @@ public class CryptoManager {
 
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchPaddingException e) {
-            throw new RuntimeException(e);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            Log.e(TAG, "decrypt: Cipher.getInstance error " + e);
+            return null;
         }
 
         Log.d(TAG, "decrypt in: " + data);
         String[] arr = data.split("\\.");
 
+        Log.d(TAG, "decrypt in: " + data);
         IvParameterSpec iv = new IvParameterSpec(Hex.stringToBytes(arr[1]));
         try {
             cipher.init(Cipher.DECRYPT_MODE, key, iv);
-        } catch (InvalidKeyException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidAlgorithmParameterException e) {
-            throw new RuntimeException(e);
+        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+            Log.e(TAG, "decrypt: Cipher.init error " + e);
+            return null;
         }
 
         byte[] out = new byte[0];
         try {
             // Convert Hex string to byte array first
             out = cipher.doFinal(Hex.stringToBytes(arr[0]));
-        } catch (BadPaddingException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalBlockSizeException e) {
-            throw new RuntimeException(e);
+        } catch (BadPaddingException | IllegalBlockSizeException e) {
+            Log.e(TAG, "decrypt: Cipher.doFinal error " + e);
+            return null;
         }
 
         String out_s = new String(out);
@@ -234,16 +228,16 @@ public class CryptoManager {
 
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchPaddingException e) {
-            throw new RuntimeException(e);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            Log.e(TAG, "encryptFile: Cipher.GetInstance error " + e);
+            return null;
         }
 
         try {
             cipher.init(Cipher.ENCRYPT_MODE, key);
         } catch (InvalidKeyException e) {
-            throw new RuntimeException(e);
+            Log.e(TAG, "encryptFile: Cipher.init error " + e);
+            return null;
         }
 
         try (FileInputStream inStream = new FileInputStream(inFile)) {
@@ -257,14 +251,12 @@ public class CryptoManager {
 
             outStream.close();
             inStream.close();
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+        } catch (FileNotFoundException | IllegalBlockSizeException | BadPaddingException e) {
+            Log.e(TAG, "encryptFile: Cipher.doFinal error " + e);
+            return null;
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalBlockSizeException e) {
-            throw new RuntimeException(e);
-        } catch (BadPaddingException e) {
-            throw new RuntimeException(e);
+            Log.e(TAG, "encryptFile: Cipher.doFinal error " + e);
+            return null;
         }
 
         return cipher.getIV();
@@ -276,19 +268,17 @@ public class CryptoManager {
 
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchPaddingException e) {
-            throw new RuntimeException(e);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            Log.e(TAG, "decryptFile: Cipher.GetInstance error " + e);
+            return;
         }
 
         IvParameterSpec iv = new IvParameterSpec(ivBytes);
         try {
             cipher.init(Cipher.DECRYPT_MODE, key, iv);
-        } catch (InvalidKeyException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidAlgorithmParameterException e) {
-            throw new RuntimeException(e);
+        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+            Log.e(TAG, "decryptFile: Cipher.init error " + e);
+            return;
         }
 
         try (FileInputStream inStream = new FileInputStream(inFile)) {
@@ -302,14 +292,10 @@ public class CryptoManager {
 
             outStream.close();
             inStream.close();
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+        } catch (FileNotFoundException | IllegalBlockSizeException | BadPaddingException e) {
+            Log.e(TAG, "decryptFile: Cipher.doFinal error " + e);
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalBlockSizeException e) {
-            throw new RuntimeException(e);
-        } catch (BadPaddingException e) {
-            throw new RuntimeException(e);
+            Log.e(TAG, "decryptFile: Cipher.doFinal error " + e);
         }
     }
 
